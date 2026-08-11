@@ -324,6 +324,119 @@
     border:1px solid var(--line);
     border-radius:14px;
   }
+  .history-item{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .history-item-main{ flex:1; min-width:0; }
+  .edit-history-btn{
+    flex:0 0 auto;
+    background:transparent;
+    border:1.5px solid var(--forest-2);
+    color:var(--forest-2);
+    font-size:12.5px;
+    font-weight:700;
+    padding:7px 12px;
+    border-radius:9px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .edit-history-btn:active{
+    background:var(--forest-2);
+    color:var(--paper);
+  }
+  .edit-banner{
+    margin: 0 0 14px;
+    background: #EFE6D2;
+    border:1px solid #D8C9A0;
+    border-radius:12px;
+    padding:12px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    font-size:13px;
+    color:#6E5A2A;
+  }
+  .edit-cancel-btn{
+    flex:0 0 auto;
+    background:transparent;
+    border:1.5px solid #8F7433;
+    color:#6E5A2A;
+    font-size:12px;
+    font-weight:700;
+    padding:6px 10px;
+    border-radius:8px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(20,20,15,0.45);
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:50;
+  }
+  .modal-overlay.show{ display:flex; }
+  .modal-card{
+    background:var(--paper);
+    border-radius:16px;
+    padding:20px;
+    width:100%;
+    max-width:340px;
+    border:1px solid var(--line);
+  }
+  .modal-title{
+    font-size:16px;
+    font-weight:750;
+    color:var(--forest);
+    margin-bottom:14px;
+  }
+  .modal-label{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:#6E6A57;
+    margin-bottom:6px;
+  }
+  .modal-date-input{
+    width:100%;
+    font-size:15px;
+    padding:11px 12px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:#fff;
+    color:var(--ink);
+    font-family:inherit;
+  }
+  .modal-actions{
+    display:flex;
+    gap:10px;
+    margin-top:18px;
+  }
+  .modal-btn-cancel, .modal-btn-confirm{
+    flex:1;
+    padding:12px 14px;
+    border-radius:10px;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+  }
+  .modal-btn-cancel{
+    background:transparent;
+    border:1.5px solid var(--line);
+    color:var(--ink);
+  }
+  .modal-btn-confirm{
+    background:var(--forest-2);
+    border:1.5px solid var(--forest-2);
+    color:var(--paper);
+  }
 </style>
 </head>
 <body>
@@ -349,6 +462,11 @@
 <div class="done-banner" id="doneBanner">✓ Semua perlengkapan sudah siap</div>
 
 <main>
+  <div class="edit-banner" id="editBanner" style="display:none;">
+    <span id="editBannerText"></span>
+    <button class="edit-cancel-btn" id="editCancelBtn">Batal edit</button>
+  </div>
+
   <ul id="list"></ul>
   <div class="empty-state" id="emptyState" style="display:none;">List kosong. Tekan Reset All untuk memunculkan semua item lagi.</div>
   <div class="status" id="status"></div>
@@ -366,6 +484,18 @@
     <button class="reset-btn" id="resetBtn">Reset All</button>
   </div>
 </footer>
+
+<div class="modal-overlay" id="sessionModal">
+  <div class="modal-card">
+    <div class="modal-title">Simpan Sesi</div>
+    <div class="modal-label">Tanggal sesi</div>
+    <input type="date" id="sessionDateInput" class="modal-date-input">
+    <div class="modal-actions">
+      <button class="modal-btn-cancel" id="modalCancelBtn">Batal</button>
+      <button class="modal-btn-confirm" id="modalConfirmBtn">Simpan</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const ITEMS = [
@@ -404,17 +534,33 @@ const resetBtn = document.getElementById("resetBtn");
 const saveSessionBtn = document.getElementById("saveSessionBtn");
 const historyListEl = document.getElementById("historyList");
 const historyEmptyEl = document.getElementById("historyEmpty");
+const editBanner = document.getElementById("editBanner");
+const editBannerText = document.getElementById("editBannerText");
+const editCancelBtn = document.getElementById("editCancelBtn");
+const sessionModal = document.getElementById("sessionModal");
+const sessionDateInput = document.getElementById("sessionDateInput");
+const modalCancelBtn = document.getElementById("modalCancelBtn");
+const modalConfirmBtn = document.getElementById("modalConfirmBtn");
 
 let checked = new Array(ITEMS.length).fill(false);
 let deleted = new Array(ITEMS.length).fill(false);
 let history = [];
 let storageAvailable = true;
+let editingId = null;
+let editingOriginalEntry = null;
 
-function formatTanggal(iso) {
-  const d = new Date(iso);
-  const jam = String(d.getHours()).padStart(2, "0");
-  const menit = String(d.getMinutes()).padStart(2, "0");
-  return `${d.getDate()} ${BULAN[d.getMonth()]} ${d.getFullYear()} · ${jam}:${menit}`;
+function todayDateStr() {
+  const d = new Date();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+function formatTanggal(dateStr) {
+  const datePart = String(dateStr).split("T")[0];
+  const [y, m, d] = datePart.split("-").map(Number);
+  if (!y || !m || !d) return datePart;
+  return `${d} ${BULAN[m - 1]} ${y}`;
 }
 
 function renderHistory() {
@@ -425,6 +571,9 @@ function renderHistory() {
   history.forEach((entry) => {
     const li = document.createElement("li");
     li.className = "history-item";
+
+    const main = document.createElement("div");
+    main.className = "history-item-main";
 
     const date = document.createElement("div");
     date.className = "history-date";
@@ -437,10 +586,54 @@ function renderHistory() {
       ? `${entry.checkedCount}/${entry.total} siap — lengkap`
       : `${entry.checkedCount}/${entry.total} siap — belum: ${entry.missing.join(", ")}`;
 
-    li.appendChild(date);
-    li.appendChild(meta);
+    main.appendChild(date);
+    main.appendChild(meta);
+    li.appendChild(main);
+
+    if (belum > 0 && Array.isArray(entry.checked) && entry.id !== undefined) {
+      const editHistBtn = document.createElement("button");
+      editHistBtn.className = "edit-history-btn";
+      editHistBtn.textContent = "Edit";
+      editHistBtn.addEventListener("click", () => editSession(entry.id));
+      li.appendChild(editHistBtn);
+    }
+
     historyListEl.appendChild(li);
   });
+}
+
+function editSession(id) {
+  const idx = history.findIndex(e => e.id === id);
+  if (idx === -1) return;
+  const entry = history[idx];
+
+  checked = ITEMS.map((_, i) => Boolean(entry.checked[i]));
+  history.splice(idx, 1);
+  editingId = entry.id;
+  editingOriginalEntry = entry;
+
+  editBannerText.textContent = `Mengedit sesi ${formatTanggal(entry.date)}`;
+  editBanner.style.display = "flex";
+
+  render();
+  renderHistory();
+  save();
+  saveHistoryData();
+}
+
+function cancelEdit() {
+  if (editingId !== null && editingOriginalEntry) {
+    history.unshift(editingOriginalEntry);
+  }
+  editingId = null;
+  editingOriginalEntry = null;
+  editBanner.style.display = "none";
+
+  checked = new Array(ITEMS.length).fill(false);
+  render();
+  renderHistory();
+  save();
+  saveHistoryData();
 }
 
 function render() {
@@ -639,25 +832,53 @@ async function load() {
 }
 
 resetBtn.addEventListener("click", async () => {
+  if (editingId !== null) {
+    if (editingOriginalEntry) history.unshift(editingOriginalEntry);
+    editingId = null;
+    editingOriginalEntry = null;
+    editBanner.style.display = "none";
+    renderHistory();
+    await saveHistoryData();
+  }
   checked = new Array(ITEMS.length).fill(false);
   deleted = new Array(ITEMS.length).fill(false);
   render();
   await save();
 });
 
-saveSessionBtn.addEventListener("click", async () => {
+editCancelBtn.addEventListener("click", async () => {
+  cancelEdit();
+});
+
+saveSessionBtn.addEventListener("click", () => {
+  sessionDateInput.value = editingId !== null && editingOriginalEntry ? editingOriginalEntry.date : todayDateStr();
+  sessionModal.classList.add("show");
+});
+
+modalCancelBtn.addEventListener("click", () => {
+  sessionModal.classList.remove("show");
+});
+
+modalConfirmBtn.addEventListener("click", async () => {
+  const chosenDate = sessionDateInput.value || todayDateStr();
   const visibleIdx = ITEMS.map((_, i) => i).filter(i => !deleted[i]);
   const missing = visibleIdx.filter(i => !checked[i]).map(i => ITEMS[i]);
   const entry = {
-    date: new Date().toISOString(),
+    id: editingId !== null ? editingId : Date.now(),
+    date: chosenDate,
+    checked: ITEMS.map((_, i) => Boolean(checked[i])),
     total: visibleIdx.length,
     checkedCount: visibleIdx.length - missing.length,
     missing
   };
   history.unshift(entry);
+  editingId = null;
+  editingOriginalEntry = null;
+  editBanner.style.display = "none";
   renderHistory();
   await saveHistoryData();
 
+  sessionModal.classList.remove("show");
   checked = new Array(ITEMS.length).fill(false);
   render();
   await save();
