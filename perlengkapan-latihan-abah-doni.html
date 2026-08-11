@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perlengkapan Latihan Abah Doni</title>
+<style>
+  :root{
+    --bg: #F3EFE4;
+    --ink: #2A2B22;
+    --line: #C9C2AC;
+    --forest: #24402F;
+    --forest-2: #315A41;
+    --clay: #B3552B;
+    --clay-2: #8F4320;
+    --paper: #FBF9F2;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:96px;
+  }
+  header{
+    background: var(--forest);
+    color: var(--paper);
+    padding: 22px 20px 26px;
+    position:relative;
+    overflow:hidden;
+  }
+  header svg{
+    position:absolute; top:0; left:0; opacity:0.18; width:100%; height:100%;
+  }
+  .eyebrow{
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color: #CFE0D3;
+    font-weight:600;
+    margin-bottom:6px;
+    position:relative;
+  }
+  h1{
+    margin:0;
+    font-size:24px;
+    font-weight:750;
+    letter-spacing:-0.01em;
+    position:relative;
+    line-height:1.25;
+  }
+  .sub{
+    margin-top:8px;
+    font-size:13px;
+    color:#BFD3C4;
+    position:relative;
+  }
+  .progress-wrap{
+    margin:18px 16px 0;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:14px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .progress-count{
+    font-variant-numeric: tabular-nums;
+    font-weight:700;
+    font-size:20px;
+    color:var(--forest);
+  }
+  .progress-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:#6E6A57;
+  }
+  .bar-track{
+    flex:1;
+    height:8px;
+    border-radius:999px;
+    background:#E4DFCE;
+    overflow:hidden;
+    margin-left:14px;
+  }
+  .bar-fill{
+    height:100%;
+    background: linear-gradient(90deg, var(--clay-2), var(--clay));
+    width:0%;
+    transition: width 0.35s ease;
+    border-radius:999px;
+  }
+  main{
+    padding: 16px 16px 0;
+    max-width: 560px;
+    margin:0 auto;
+  }
+  ul{
+    list-style:none;
+    margin:0;
+    padding:0;
+    border-radius:14px;
+    overflow:hidden;
+    border:1px solid var(--line);
+    background:var(--paper);
+  }
+  li{
+    border-bottom:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    transition: opacity 0.18s ease, max-height 0.25s ease, padding 0.25s ease;
+  }
+  li:last-child{ border-bottom:none; }
+  label{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:14px 4px 14px 16px;
+    cursor:pointer;
+    user-select:none;
+    -webkit-tap-highlight-color: transparent;
+    flex:1;
+    min-width:0;
+  }
+  .box{
+    flex:0 0 24px;
+    width:24px;
+    height:24px;
+    border-radius:7px;
+    border:2px solid var(--forest-2);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .box svg{
+    width:14px;
+    height:14px;
+    opacity:0;
+    transform: scale(0.6);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+  input[type="checkbox"]{
+    display:none;
+  }
+  input[type="checkbox"]:checked + .box{
+    background: var(--forest-2);
+    border-color: var(--forest-2);
+  }
+  input[type="checkbox"]:checked + .box svg{
+    opacity:1;
+    transform: scale(1);
+  }
+  .item-text{
+    font-size:15.5px;
+    line-height:1.4;
+    color:var(--ink);
+    transition: color 0.15s ease, text-decoration-color 0.15s ease;
+  }
+  input[type="checkbox"]:checked ~ .item-text{
+    color:#8B8A78;
+    text-decoration: line-through;
+    text-decoration-color:#A9A88F;
+    text-decoration-thickness: 1.5px;
+  }
+  .num{
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size:11px;
+    color:#A79E7F;
+    width:20px;
+    flex:0 0 20px;
+    text-align:right;
+  }
+  .item-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex:1;
+    min-width:0;
+  }
+  .item-text{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .del-btn{
+    flex:0 0 40px;
+    width:40px;
+    height:40px;
+    border:none;
+    background:transparent;
+    color:#A79E7F;
+    font-size:16px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .del-btn:active{
+    color: var(--clay-2);
+  }
+  .empty-state{
+    padding: 28px 16px;
+    text-align:center;
+    font-size:13.5px;
+    color:#8B8A78;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:14px;
+  }
+  footer{
+    position:fixed;
+    bottom:0; left:0; right:0;
+    background:var(--bg);
+    border-top:1px solid var(--line);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    display:flex;
+    justify-content:center;
+  }
+  .reset-btn{
+    width:100%;
+    max-width:560px;
+    background:var(--paper);
+    border:1.5px solid var(--clay-2);
+    color:var(--clay-2);
+    font-weight:700;
+    font-size:14.5px;
+    letter-spacing:0.01em;
+    padding:13px 16px;
+    border-radius:12px;
+    cursor:pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .reset-btn:active{
+    background: var(--clay-2);
+    color: var(--paper);
+  }
+  .status{
+    text-align:center;
+    font-size:12px;
+    color:#8B8A78;
+    padding: 10px 0 4px;
+  }
+  .done-banner{
+    margin: 14px 16px 0;
+    background: var(--forest);
+    color: var(--paper);
+    border-radius:12px;
+    padding:12px 16px;
+    font-size:13.5px;
+    font-weight:600;
+    text-align:center;
+    display:none;
+  }
+  .done-banner.show{ display:block; }
+</style>
+</head>
+<body>
+
+<header>
+  <svg viewBox="0 0 400 64" preserveAspectRatio="none">
+    <path d="M0,40 Q50,10 100,35 T200,30 T300,45 T400,20" stroke="#F3EFE4" stroke-width="1" fill="none"/>
+    <path d="M0,50 Q50,25 100,48 T200,42 T300,55 T400,35" stroke="#F3EFE4" stroke-width="1" fill="none"/>
+  </svg>
+  <div class="eyebrow">Gear check</div>
+  <h1>Perlengkapan Latihan<br>Abah Doni</h1>
+  <div class="sub">Cek satu per satu sebelum berangkat latihan</div>
+</header>
+
+<div class="progress-wrap">
+  <div>
+    <div class="progress-count" id="count">0/19</div>
+    <div class="progress-label">Siap</div>
+  </div>
+  <div class="bar-track"><div class="bar-fill" id="barFill"></div></div>
+</div>
+
+<div class="done-banner" id="doneBanner">✓ Semua perlengkapan sudah siap</div>
+
+<main>
+  <ul id="list"></ul>
+  <div class="empty-state" id="emptyState" style="display:none;">List kosong. Tekan Reset All untuk memunculkan semua item lagi.</div>
+  <div class="status" id="status"></div>
+</main>
+
+<footer>
+  <button class="reset-btn" id="resetBtn">Reset All</button>
+</footer>
+
+<script>
+const ITEMS = [
+  "Sepatu",
+  "Belt",
+  "Vest",
+  "Kaus kaki",
+  "Baju ganti, handuk, dan sabun mandi",
+  "Calf protektor",
+  "Lengan panjang baju",
+  "Headset",
+  "Salep selakangan",
+  "Pil elektrolit",
+  "Makanan suplemen",
+  "Protein shake",
+  "Soft flask banyak",
+  "Air putih dingin di termos",
+  "Air Pocari",
+  "Pelindung dengkul",
+  "Case iPhone anti keringat (bisa lock)",
+  "Kacamata",
+  "Trekking pole"
+];
+
+const STORAGE_KEY = "gear-checklist-abah-doni";
+const listEl = document.getElementById("list");
+const countEl = document.getElementById("count");
+const barFillEl = document.getElementById("barFill");
+const statusEl = document.getElementById("status");
+const doneBanner = document.getElementById("doneBanner");
+const emptyStateEl = document.getElementById("emptyState");
+const resetBtn = document.getElementById("resetBtn");
+
+let checked = new Array(ITEMS.length).fill(false);
+let deleted = new Array(ITEMS.length).fill(false);
+let storageAvailable = true;
+
+function render() {
+  listEl.innerHTML = "";
+  let visibleCount = 0;
+
+  ITEMS.forEach((text, i) => {
+    if (deleted[i]) return;
+    visibleCount++;
+
+    const li = document.createElement("li");
+    const label = document.createElement("label");
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = checked[i];
+    checkbox.addEventListener("change", () => toggleChecked(i));
+
+    const box = document.createElement("div");
+    box.className = "box";
+    box.innerHTML = '<svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.2 12L13 4" stroke="#FBF9F2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    const row = document.createElement("div");
+    row.className = "item-row";
+
+    const num = document.createElement("span");
+    num.className = "num";
+    num.textContent = String(i + 1).padStart(2, "0");
+
+    const itemText = document.createElement("span");
+    itemText.className = "item-text";
+    itemText.textContent = text;
+
+    row.appendChild(num);
+    row.appendChild(itemText);
+
+    label.appendChild(checkbox);
+    label.appendChild(box);
+    label.appendChild(row);
+
+    const delBtn = document.createElement("button");
+    delBtn.className = "del-btn";
+    delBtn.setAttribute("aria-label", "Hapus " + text);
+    delBtn.textContent = "×";
+    delBtn.addEventListener("click", () => removeItem(i));
+
+    li.appendChild(label);
+    li.appendChild(delBtn);
+    listEl.appendChild(li);
+  });
+
+  listEl.style.display = visibleCount === 0 ? "none" : "block";
+  emptyStateEl.style.display = visibleCount === 0 ? "block" : "none";
+
+  updateProgress(visibleCount);
+}
+
+function updateProgress(visibleCount) {
+  const total = visibleCount !== undefined ? visibleCount : ITEMS.filter((_, i) => !deleted[i]).length;
+  const checkedVisible = ITEMS.reduce((sum, _, i) => sum + (!deleted[i] && checked[i] ? 1 : 0), 0);
+  countEl.textContent = `${checkedVisible}/${total}`;
+  barFillEl.style.width = total === 0 ? "0%" : `${(checkedVisible / total) * 100}%`;
+  doneBanner.classList.toggle("show", total > 0 && checkedVisible === total);
+}
+
+async function toggleChecked(i) {
+  checked[i] = !checked[i];
+  updateProgress();
+  await save();
+}
+
+async function removeItem(i) {
+  deleted[i] = true;
+  render();
+  await save();
+}
+
+async function save() {
+  const payload = JSON.stringify({ checked, deleted });
+
+  if (typeof window.storage !== "undefined") {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const result = await window.storage.set(STORAGE_KEY, payload, false);
+        if (!result) throw new Error("storage.set returned empty/null result");
+        statusEl.textContent = "";
+        return;
+      } catch (e) {
+        if (attempt === 0) {
+          await new Promise(r => setTimeout(r, 300));
+          continue;
+        }
+        const detail = (e && (e.message || e.name || String(e))) || "unknown error";
+        statusEl.textContent = "Gagal menyimpan — detail: " + detail;
+      }
+    }
+    return;
+  }
+
+  // Fallback: real webpage outside Claude (localStorage works fine here)
+  try {
+    window.localStorage.setItem(STORAGE_KEY, payload);
+    statusEl.textContent = "";
+  } catch (e) {
+    statusEl.textContent = "Gagal menyimpan di browser ini.";
+  }
+}
+
+async function load() {
+  statusEl.textContent = "Memuat...";
+
+  if (typeof window.storage === "undefined") {
+    // Real webpage outside Claude — use localStorage
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved && Array.isArray(saved.checked) && saved.checked.length === ITEMS.length) {
+          checked = saved.checked;
+        }
+        if (saved && Array.isArray(saved.deleted) && saved.deleted.length === ITEMS.length) {
+          deleted = saved.deleted;
+        }
+      }
+    } catch (e) {
+      // ignore, start fresh
+    }
+    statusEl.textContent = "";
+    render();
+    return;
+  }
+
+  try {
+    const result = await window.storage.get(STORAGE_KEY, false);
+    if (result && result.value) {
+      const saved = JSON.parse(result.value);
+      if (saved && Array.isArray(saved.checked) && saved.checked.length === ITEMS.length) {
+        checked = saved.checked;
+      }
+      if (saved && Array.isArray(saved.deleted) && saved.deleted.length === ITEMS.length) {
+        deleted = saved.deleted;
+      }
+    }
+    statusEl.textContent = "";
+  } catch (e) {
+    // belum ada data tersimpan, mulai dari awal
+    statusEl.textContent = "";
+  }
+  render();
+}
+
+resetBtn.addEventListener("click", async () => {
+  checked = new Array(ITEMS.length).fill(false);
+  deleted = new Array(ITEMS.length).fill(false);
+  render();
+  await save();
+});
+
+load();
+</script>
+
+</body>
+</html>
