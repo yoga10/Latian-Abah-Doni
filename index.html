@@ -116,6 +116,16 @@
     transition: opacity 0.18s ease, max-height 0.25s ease, padding 0.25s ease;
   }
   li:last-child{ border-bottom:none; }
+  li.group-header{
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:#6E6A57;
+    background:#EDE8D8;
+    padding:9px 16px;
+  }
+  li.group-header:first-child{ border-top:none; }
   label{
     display:flex;
     align-items:center;
@@ -505,9 +515,11 @@ const ITEMS = [
   "Belt",
   "Calf protektor",
   "Case iPhone anti keringat (bisa lock)",
+  "Gunting Kuku",
   "Headset",
   "Jam Garmin",
   "Kacamata",
+  "Kartu Tol",
   "Kaus kaki",
   "Lengan panjang baju",
   "Makanan suplemen",
@@ -636,54 +648,71 @@ function cancelEdit() {
   saveHistoryData();
 }
 
+function buildItemLi(i, text) {
+  const li = document.createElement("li");
+  const label = document.createElement("label");
+
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.checked = checked[i];
+  checkbox.addEventListener("change", () => toggleChecked(i));
+
+  const box = document.createElement("div");
+  box.className = "box";
+  box.innerHTML = '<svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.2 12L13 4" stroke="#FBF9F2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  const row = document.createElement("div");
+  row.className = "item-row";
+
+  const num = document.createElement("span");
+  num.className = "num";
+  num.textContent = String(i + 1).padStart(2, "0");
+
+  const itemText = document.createElement("span");
+  itemText.className = "item-text";
+  itemText.textContent = text;
+
+  row.appendChild(num);
+  row.appendChild(itemText);
+
+  label.appendChild(checkbox);
+  label.appendChild(box);
+  label.appendChild(row);
+
+  const delBtn = document.createElement("button");
+  delBtn.className = "del-btn";
+  delBtn.setAttribute("aria-label", "Hapus " + text);
+  delBtn.textContent = "×";
+  delBtn.addEventListener("click", () => removeItem(i));
+
+  li.appendChild(label);
+  li.appendChild(delBtn);
+  return li;
+}
+
+function buildGroupHeader(text) {
+  const li = document.createElement("li");
+  li.className = "group-header";
+  li.textContent = text;
+  return li;
+}
+
 function render() {
   listEl.innerHTML = "";
-  let visibleCount = 0;
 
-  ITEMS.forEach((text, i) => {
-    if (deleted[i]) return;
-    visibleCount++;
+  const visibleIdx = ITEMS.map((_, i) => i).filter(i => !deleted[i]);
+  const uncheckedIdx = visibleIdx.filter(i => !checked[i]);
+  const checkedIdx = visibleIdx.filter(i => checked[i]);
+  const visibleCount = visibleIdx.length;
 
-    const li = document.createElement("li");
-    const label = document.createElement("label");
-
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.checked = checked[i];
-    checkbox.addEventListener("change", () => toggleChecked(i));
-
-    const box = document.createElement("div");
-    box.className = "box";
-    box.innerHTML = '<svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.2 12L13 4" stroke="#FBF9F2" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-
-    const row = document.createElement("div");
-    row.className = "item-row";
-
-    const num = document.createElement("span");
-    num.className = "num";
-    num.textContent = String(i + 1).padStart(2, "0");
-
-    const itemText = document.createElement("span");
-    itemText.className = "item-text";
-    itemText.textContent = text;
-
-    row.appendChild(num);
-    row.appendChild(itemText);
-
-    label.appendChild(checkbox);
-    label.appendChild(box);
-    label.appendChild(row);
-
-    const delBtn = document.createElement("button");
-    delBtn.className = "del-btn";
-    delBtn.setAttribute("aria-label", "Hapus " + text);
-    delBtn.textContent = "×";
-    delBtn.addEventListener("click", () => removeItem(i));
-
-    li.appendChild(label);
-    li.appendChild(delBtn);
-    listEl.appendChild(li);
-  });
+  if (uncheckedIdx.length > 0) {
+    listEl.appendChild(buildGroupHeader(`Belum dicek (${uncheckedIdx.length})`));
+    uncheckedIdx.forEach(i => listEl.appendChild(buildItemLi(i, ITEMS[i])));
+  }
+  if (checkedIdx.length > 0) {
+    listEl.appendChild(buildGroupHeader(`Sudah dicek (${checkedIdx.length})`));
+    checkedIdx.forEach(i => listEl.appendChild(buildItemLi(i, ITEMS[i])));
+  }
 
   listEl.style.display = visibleCount === 0 ? "none" : "block";
   emptyStateEl.style.display = visibleCount === 0 ? "block" : "none";
