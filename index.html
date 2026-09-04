@@ -523,12 +523,14 @@ const ITEMS = [
   "Kaus kaki",
   "Lengan panjang baju",
   "Makanan suplemen",
+  "Nutrisi Latian",
   "Pelindung dengkul",
   "Pil elektrolit",
   "Protein shake",
   "Salep selakangan",
   "Sepatu",
   "Soft flask banyak",
+  "Topi",
   "Trekking pole",
   "Vest"
 ];
@@ -553,6 +555,44 @@ const sessionModal = document.getElementById("sessionModal");
 const sessionDateInput = document.getElementById("sessionDateInput");
 const modalCancelBtn = document.getElementById("modalCancelBtn");
 const modalConfirmBtn = document.getElementById("modalConfirmBtn");
+
+// Item lama sebelum penambahan "Nutrisi Latian" dan "Topi" — dipakai untuk
+// memetakan data lama (tersimpan sebagai array posisi) berdasarkan nama.
+const LEGACY_ITEMS_22 = [
+  "Air Pocari",
+  "Air putih dingin di termos",
+  "Baju ganti, handuk, dan sabun mandi",
+  "Belt",
+  "Calf protektor",
+  "Case iPhone anti keringat (bisa lock)",
+  "Gunting Kuku",
+  "Headset",
+  "Jam Garmin",
+  "Kacamata",
+  "Kartu Tol",
+  "Kaus kaki",
+  "Lengan panjang baju",
+  "Makanan suplemen",
+  "Pelindung dengkul",
+  "Pil elektrolit",
+  "Protein shake",
+  "Salep selakangan",
+  "Sepatu",
+  "Soft flask banyak",
+  "Trekking pole",
+  "Vest"
+];
+
+function namesFromLegacyArray(boolArr) {
+  if (!Array.isArray(boolArr)) return [];
+  if (boolArr.length === ITEMS.length) {
+    return ITEMS.filter((_, i) => boolArr[i]);
+  }
+  if (boolArr.length === LEGACY_ITEMS_22.length) {
+    return LEGACY_ITEMS_22.filter((_, i) => boolArr[i]);
+  }
+  return [];
+}
 
 let checked = new Array(ITEMS.length).fill(false);
 let deleted = new Array(ITEMS.length).fill(false);
@@ -602,7 +642,7 @@ function renderHistory() {
     main.appendChild(meta);
     li.appendChild(main);
 
-    if (belum > 0 && Array.isArray(entry.checked) && entry.id !== undefined) {
+    if (belum > 0 && (Array.isArray(entry.checkedNames) || Array.isArray(entry.checked)) && entry.id !== undefined) {
       const editHistBtn = document.createElement("button");
       editHistBtn.className = "edit-history-btn";
       editHistBtn.textContent = "Edit";
@@ -619,7 +659,9 @@ function editSession(id) {
   if (idx === -1) return;
   const entry = history[idx];
 
-  checked = ITEMS.map((_, i) => Boolean(entry.checked[i]));
+  const names = Array.isArray(entry.checkedNames) ? entry.checkedNames : namesFromLegacyArray(entry.checked);
+  const namesSet = new Set(names);
+  checked = ITEMS.map(text => namesSet.has(text));
   history.splice(idx, 1);
   editingId = entry.id;
   editingOriginalEntry = entry;
@@ -741,7 +783,10 @@ async function removeItem(i) {
 }
 
 async function save() {
-  const payload = JSON.stringify({ checked, deleted });
+  const payload = JSON.stringify({
+    checkedNames: ITEMS.filter((_, i) => checked[i]),
+    deletedNames: ITEMS.filter((_, i) => deleted[i])
+  });
 
   if (typeof window.storage !== "undefined") {
     for (let attempt = 0; attempt < 2; attempt++) {
@@ -820,19 +865,25 @@ async function loadHistoryData() {
 async function load() {
   statusEl.textContent = "Memuat...";
 
+  function applySaved(saved) {
+    if (!saved) return;
+    const checkedNames = Array.isArray(saved.checkedNames)
+      ? saved.checkedNames
+      : namesFromLegacyArray(saved.checked);
+    const deletedNames = Array.isArray(saved.deletedNames)
+      ? saved.deletedNames
+      : namesFromLegacyArray(saved.deleted);
+    const checkedSet = new Set(checkedNames);
+    const deletedSet = new Set(deletedNames);
+    checked = ITEMS.map(text => checkedSet.has(text));
+    deleted = ITEMS.map(text => deletedSet.has(text));
+  }
+
   if (typeof window.storage === "undefined") {
     // Real webpage outside Claude — use localStorage
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw);
-        if (saved && Array.isArray(saved.checked) && saved.checked.length === ITEMS.length) {
-          checked = saved.checked;
-        }
-        if (saved && Array.isArray(saved.deleted) && saved.deleted.length === ITEMS.length) {
-          deleted = saved.deleted;
-        }
-      }
+      if (raw) applySaved(JSON.parse(raw));
     } catch (e) {
       // ignore, start fresh
     }
@@ -843,15 +894,7 @@ async function load() {
 
   try {
     const result = await window.storage.get(STORAGE_KEY, false);
-    if (result && result.value) {
-      const saved = JSON.parse(result.value);
-      if (saved && Array.isArray(saved.checked) && saved.checked.length === ITEMS.length) {
-        checked = saved.checked;
-      }
-      if (saved && Array.isArray(saved.deleted) && saved.deleted.length === ITEMS.length) {
-        deleted = saved.deleted;
-      }
-    }
+    if (result && result.value) applySaved(JSON.parse(result.value));
     statusEl.textContent = "";
   } catch (e) {
     // belum ada data tersimpan, mulai dari awal
@@ -895,7 +938,7 @@ modalConfirmBtn.addEventListener("click", async () => {
   const entry = {
     id: editingId !== null ? editingId : Date.now(),
     date: chosenDate,
-    checked: ITEMS.map((_, i) => Boolean(checked[i])),
+    checkedNames: ITEMS.filter((_, i) => checked[i]),
     total: visibleIdx.length,
     checkedCount: visibleIdx.length - missing.length,
     missing
